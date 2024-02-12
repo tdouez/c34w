@@ -29,6 +29,7 @@
 // Partage dans les Mêmes Conditions 4.0 International.
 //--------------------------------------------------------------------
 // 2023/11/10 - FB V1.0.0
+// 2024/02/11 - FB V1.1.0 - Mise à jour toutes les 15 minutes
 //--------------------------------------------------------------------
 #include <Arduino.h>
 #include <DNSServer.h>
@@ -47,7 +48,7 @@
 #include "SPIFFS.h"
 #include "mdns.h"
  
-#define VERSION   "v1.0.0"
+#define VERSION   "v1.1.0"
  
 #define LED_DEMAIN  0
 #define LED_JOUR    1
@@ -95,6 +96,15 @@ AsyncWebServer server(80);
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN_LED, NEO_GRB + NEO_KHZ800);
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
+
+const uint32_t black = pixels.Color(0, 0, 0);
+const uint32_t red = pixels.Color(255, 0, 0);
+const uint32_t green = pixels.Color(0, 255, 0);
+const uint32_t blue = pixels.Color(0, 0, 255);
+const uint32_t white = pixels.Color(255, 255, 255);
+const uint32_t purple = pixels.Color(255, 0, 255);
+const uint32_t yellow = pixels.Color(255, 255, 0);
+const uint32_t orange = pixels.Color(255, 165, 0);
 
 
 //-----------------------------------------------------------------------
@@ -459,7 +469,7 @@ void loadConfig() {
 //-----------------------------------------------------------------------
 void saveConfig() {
   
-  pixels.setPixelColor(LED_WIFI, pixels.Color(255, 0, 255));
+  pixels.setPixelColor(LED_WIFI, purple);
   pixels.show();
   Serial.println(F("Sauvegarde config.json"));
 
@@ -480,7 +490,7 @@ void saveConfig() {
   else Serial.println("Fichier sauvegardé");
   configFile.close();
   delay(100);
-  pixels.setPixelColor(LED_WIFI, pixels.Color(0, 255, 0));
+  pixels.setPixelColor(LED_WIFI, green);
   pixels.show();
 
   maj_prog = true;
@@ -488,7 +498,7 @@ void saveConfig() {
 
 //-----------------------------------------------------------------------
 void configModeCallback (WiFiManager *myWiFiManager) {
-  pixels.setPixelColor(LED_WIFI, pixels.Color(0, 0, 255));
+  pixels.setPixelColor(LED_WIFI, blue);
   pixels.show();
 }
 
@@ -506,8 +516,8 @@ void checkButton(){
         Serial.println("Button Held");
         Serial.println("Erasing Config, restarting");
         for(int i=0; i<10; i++) {
-          if (i%2) pixels.setPixelColor(LED_WIFI, pixels.Color(255, 255, 0));
-            else pixels.setPixelColor(LED_WIFI, pixels.Color(0, 0, 0));
+          if (i%2) pixels.setPixelColor(LED_WIFI, yellow);
+            else pixels.setPixelColor(LED_WIFI, black);
           pixels.show();
           delay(120);
         }
@@ -518,21 +528,21 @@ void checkButton(){
       // start portal w delay
       Serial.println("Starting config portal");
       wm.setConfigPortalTimeout(120);
-      pixels.setPixelColor(LED_JOUR, pixels.Color(0, 0, 0));
-      pixels.setPixelColor(LED_DEMAIN, pixels.Color(0, 0, 0));
-      pixels.setPixelColor(LED_WIFI, pixels.Color(200, 0, 200));
+      pixels.setPixelColor(LED_JOUR, black);
+      pixels.setPixelColor(LED_DEMAIN, black);
+      pixels.setPixelColor(LED_WIFI, purple);
       pixels.show();
      
       if (!wm.startConfigPortal(module_name,"password")) {
         Serial.println("failed to connect or hit timeout");
         delay(3000);
-        pixels.setPixelColor(LED_WIFI, pixels.Color(0, 255, 0));
+        pixels.setPixelColor(LED_WIFI, red);
         pixels.show();
         // ESP.restart();
       } else {
         //if you get here you have connected to the WiFi
         Serial.println("connected...:)");
-        pixels.setPixelColor(LED_WIFI, pixels.Color(0, 255, 0));
+        pixels.setPixelColor(LED_WIFI, green);
         pixels.show();
         flag_first = true;
       }
@@ -548,7 +558,8 @@ void interrogation_tempo()
 
   Url = String(url_edf_part) + return_current_date();
 
-  pixels.setPixelColor(LED_WIFI, pixels.Color(255, 165, 0));
+  pixels.setPixelColor(LED_WIFI, yellow);
+  pixels.show();
 
   Serial.println(Url);
   http.begin(Url);
@@ -566,24 +577,27 @@ void interrogation_tempo()
         //Serial.println(F("Contenu:"));
         //serializeJson(json, Serial);
 
-        pixels.setPixelColor(LED_JOUR, pixels.Color(0, 0, 0));
+        pixels.setPixelColor(LED_JOUR, black);
         strcpy(couleur_jour, json["couleurJourJ"]);
-        if (strstr(couleur_jour, "BLEU")) pixels.setPixelColor(LED_JOUR, pixels.Color(0, 0, 255));
-        if (strstr(couleur_jour, "BLANC")) pixels.setPixelColor(LED_JOUR, pixels.Color(255, 255, 255));
-        if (strstr(couleur_jour, "ROUGE")) pixels.setPixelColor(LED_JOUR, pixels.Color(255, 0, 0));
+        if (strstr(couleur_jour, "BLEU")) pixels.setPixelColor(LED_JOUR, blue);
+        if (strstr(couleur_jour, "BLANC")) pixels.setPixelColor(LED_JOUR, white);
+        if (strstr(couleur_jour, "ROUGE")) pixels.setPixelColor(LED_JOUR, red);
 
-        pixels.setPixelColor(LED_DEMAIN, pixels.Color(0, 0, 0));
+        pixels.setPixelColor(LED_DEMAIN, black);
         strcpy(couleur_demain, json["couleurJourJ1"]);
-        if (strstr(couleur_demain, "BLEU")) pixels.setPixelColor(LED_DEMAIN, pixels.Color(0, 0, 255));
-        if (strstr(couleur_demain, "BLANC")) pixels.setPixelColor(LED_DEMAIN, pixels.Color(255, 255, 255));
-        if (strstr(couleur_demain, "ROUGE")) pixels.setPixelColor(LED_DEMAIN, pixels.Color(255, 0, 0));
-        pixels.show();
+        if (strstr(couleur_demain, "BLEU")) pixels.setPixelColor(LED_DEMAIN, blue);
+        if (strstr(couleur_demain, "BLANC")) pixels.setPixelColor(LED_DEMAIN, white);
+        if (strstr(couleur_demain, "ROUGE")) pixels.setPixelColor(LED_DEMAIN, red);
+
+        pixels.setPixelColor(LED_WIFI, green);      
     }
+    else pixels.setPixelColor(LED_WIFI, orange);  
   }
+  else pixels.setPixelColor(LED_WIFI, orange);
 
   http.end();
 
-  pixels.setPixelColor(LED_WIFI, pixels.Color(0, 255, 0));
+  pixels.show();
 }
 
 //-----------------------------------------------------------------------
@@ -604,7 +618,7 @@ void setup() {
   pixels.begin(); // INITIALIZE NeoPixel
   pixels.clear(); // Set all pixel colors to 'off'
   pixels.setBrightness(100);
-  pixels.setPixelColor(LED_WIFI, pixels.Color(200, 0, 200));
+  pixels.setPixelColor(LED_WIFI, purple);
   pixels.show();
   
   sprintf(module_name, "C34w_%06X", ESP.getEfuseMac());
@@ -612,7 +626,7 @@ void setup() {
   //----------------------------------------------------SPIFFS
   if(!SPIFFS.begin()) {
     Serial.println("Erreur montage SPIFFS !");
-    pixels.setPixelColor(LED_WIFI, pixels.Color(255, 0, 0));
+    pixels.setPixelColor(LED_WIFI, red);
 	  pixels.show();
 	  while (1) {};
   }
@@ -636,7 +650,7 @@ void setup() {
   if(!res) {
       Serial.println("Failed to connect");
       // ESP.restart();
-      pixels.setPixelColor(LED_WIFI, pixels.Color(255, 0, 0));
+      pixels.setPixelColor(LED_WIFI, red);
       pixels.show();
       delay(5000);
       ESP.restart();
@@ -644,7 +658,7 @@ void setup() {
   else {
       //if you get here you have connected to the WiFi   
       Serial.println("connected... :)");
-      pixels.setPixelColor(LED_WIFI, pixels.Color(0, 255, 0));
+      pixels.setPixelColor(LED_WIFI, green);
       timeClient.begin();
       flag_first = true;
       flag_call = true;
@@ -674,7 +688,7 @@ void loop() {
   }
 
   minute_courante = timeClient.getMinutes();
-  if (minute_courante == 5) {
+  if (minute_courante == 0 || minute_courante == 15 || minute_courante == 30) {
     if (flag_call == true) interrogation_tempo();
     flag_call = false;
   }
@@ -687,12 +701,12 @@ void loop() {
 
     etat_relais = checkRelais();
     if (etat_relais) {
-      pixels.setPixelColor(LED_RELAIS, pixels.Color(255, 255, 0));
+      pixels.setPixelColor(LED_RELAIS, yellow);
       pixels.show();
       digitalWrite(PIN_RELAIS, HIGH);
     }
     else {
-      pixels.setPixelColor(LED_RELAIS, pixels.Color(0, 0, 0));
+      pixels.setPixelColor(LED_RELAIS, black);
       pixels.show();
       digitalWrite(PIN_RELAIS, LOW);
     }
