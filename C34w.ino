@@ -30,6 +30,9 @@
 //--------------------------------------------------------------------
 // 2023/11/10 - FB V1.0.0
 // 2024/02/11 - FB V1.1.0 - Mise à jour toutes les 15 minutes
+// 2024/02/26 - FB V1.2.0 - Correction sur les heures HP et HC inversées
+//                          Passage mise à jour toules les 5 minutes.
+//                          Ajout clignotement jour en HP                
 //--------------------------------------------------------------------
 #include <Arduino.h>
 #include <DNSServer.h>
@@ -47,8 +50,9 @@
 #include "FS.h"
 #include "SPIFFS.h"
 #include "mdns.h"
+#include <Ticker.h>
  
-#define VERSION   "v1.1.0"
+#define VERSION   "v1.2.0"
  
 #define LED_DEMAIN  0
 #define LED_JOUR    1
@@ -78,6 +82,7 @@ bool flag_call = true;
 bool flag_first = true;
 bool etat_relais = false;
 bool maj_prog = false;
+bool state_led = false;
 String Reponse_tempo;
 String Startup_date;
 uint b_hc_name;
@@ -89,13 +94,15 @@ uint r_hp_name;
 uint horaire = HC;
 uint memo_minute = 0;
 uint minute_courante = 0;
-
+uint32_t val_couleur_jour;
+uint32_t val_couleur_demain;
 
 WiFiManager wm;
 AsyncWebServer server(80);
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN_LED, NEO_GRB + NEO_KHZ800);
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 3600, 60000);
+Ticker blinker;
 
 const uint32_t black = pixels.Color(0, 0, 0);
 const uint32_t red = pixels.Color(255, 0, 0);
@@ -106,6 +113,11 @@ const uint32_t purple = pixels.Color(255, 0, 255);
 const uint32_t yellow = pixels.Color(255, 255, 0);
 const uint32_t orange = pixels.Color(255, 165, 0);
 
+
+//-----------------------------------------------------------------------
+void blink_led() {
+  state_led = !state_led;
+}
 
 //-----------------------------------------------------------------------
 void start_mdns_service()
@@ -181,9 +193,9 @@ uint checkHoraire()
 
   uint heure_courante = timeClient.getHours();
 
-  if (heure_courante >= 0 && heure_courante < HORAIRE_MATIN) h = HP;
-  if (heure_courante >= HORAIRE_MATIN && heure_courante < HORAIRE_SOIR) h = HC;
-  if (heure_courante >= HORAIRE_SOIR) h = HP;
+  if (heure_courante >= 0 && heure_courante < HORAIRE_MATIN) h = HC; // 0h à 6h -> heures creuses
+  if (heure_courante >= HORAIRE_MATIN && heure_courante < HORAIRE_SOIR) h = HP; // 6h à 22h -> heures pleines
+  if (heure_courante >= HORAIRE_SOIR) h = HC; // 22h à 0h -> heures creuses
 
   return h;
 }
@@ -577,17 +589,17 @@ void interrogation_tempo()
         //Serial.println(F("Contenu:"));
         //serializeJson(json, Serial);
 
-        pixels.setPixelColor(LED_JOUR, black);
+        val_couleur_jour = black;
         strcpy(couleur_jour, json["couleurJourJ"]);
-        if (strstr(couleur_jour, "BLEU")) pixels.setPixelColor(LED_JOUR, blue);
-        if (strstr(couleur_jour, "BLANC")) pixels.setPixelColor(LED_JOUR, white);
-        if (strstr(couleur_jour, "ROUGE")) pixels.setPixelColor(LED_JOUR, red);
-
-        pixels.setPixelColor(LED_DEMAIN, black);
+        if (strstr(couleur_jour, "BLEU")) val_couleur_jour = blue;
+        if (strstr(couleur_jour, "BLANC")) val_couleur_jour = white;
+        if (strstr(couleur_jour, "ROUGE")) val_couleur_jour = red;
+        
+        val_couleur_demain = black;
         strcpy(couleur_demain, json["couleurJourJ1"]);
-        if (strstr(couleur_demain, "BLEU")) pixels.setPixelColor(LED_DEMAIN, blue);
-        if (strstr(couleur_demain, "BLANC")) pixels.setPixelColor(LED_DEMAIN, white);
-        if (strstr(couleur_demain, "ROUGE")) pixels.setPixelColor(LED_DEMAIN, red);
+        if (strstr(couleur_demain, "BLEU")) val_couleur_demain = blue;
+        if (strstr(couleur_demain, "BLANC")) val_couleur_demain = white;
+        if (strstr(couleur_demain, "ROUGE")) val_couleur_demain = red;
 
         pixels.setPixelColor(LED_WIFI, green);      
     }
@@ -675,6 +687,8 @@ void setup() {
   
   timeClient.update();
   Startup_date = return_current_date() + String (" ") + return_current_time();
+
+  blinker.attach(1, blink_led);
 }
  
 //-----------------------------------------------------------------------
@@ -688,7 +702,7 @@ void loop() {
   }
 
   minute_courante = timeClient.getMinutes();
-  if (minute_courante == 0 || minute_courante == 15 || minute_courante == 30) {
+  if ((minute_courante % 5) == 0) {  // maj toutes les 5 minutes
     if (flag_call == true) interrogation_tempo();
     flag_call = false;
   }
@@ -714,5 +728,14 @@ void loop() {
   }
 
   checkButton();
+
+  if (horaire == HC) pixels.setPixelColor(LED_JOUR, val_couleur_jour);
+    else {
+      if (state_led == true) pixels.setPixelColor(LED_JOUR, val_couleur_jour);
+        else pixels.setPixelColor(LED_JOUR, black);
+    }
+  pixels.setPixelColor(LED_DEMAIN, val_couleur_demain);
+  pixels.show();
+  
  
 }
