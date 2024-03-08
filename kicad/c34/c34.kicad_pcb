@@ -172,7 +172,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "TerminalBlock:TerminalBlock_Altech_AK300-3_P5.00mm"
 			(at 0 0 180)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -196,7 +196,7 @@
 				)
 			)
 		)
-		(property "Description" "Generic screw terminal, single row, 01x03, script generated (kicad-library-utils/schlib/autogen/connector/)"
+		(property "Description" ""
 			(at 0 0 180)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -208,7 +208,9 @@
 				)
 			)
 		)
+		(property ki_fp_filters "TerminalBlock*:*")
 		(path "/946fa569-277b-4a91-9168-d36352116f5c")
+		(sheetname "Racine")
 		(sheetfile "c34.kicad_sch")
 		(attr through_hole)
 		(fp_line
@@ -1537,7 +1539,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "LED_SMD:LED_Inolux_IN-PI554FCH_PLCC4_5.0x5.0mm_P3.2mm"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -1549,7 +1551,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "http://www.inolux-corp.com/datasheet/SMDLED/Addressable%20LED/IN-PI554FCH.pdf"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -1561,7 +1563,7 @@
 				)
 			)
 		)
-		(property "Description" "5050 RGB LED 4-Pin with integrated IC"
+		(property "Description" ""
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -1573,7 +1575,9 @@
 				)
 			)
 		)
+		(property ki_fp_filters "LED*IN-PI554FCH*PLCC*5.0x5.0mm*P3.2mm*")
 		(path "/6356276d-5eeb-4153-b7ca-a0fb5c5fd272")
+		(sheetname "Racine")
 		(sheetfile "c34.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -1794,7 +1798,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "LED_SMD:LED_Inolux_IN-PI554FCH_PLCC4_5.0x5.0mm_P3.2mm"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -1806,7 +1810,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "http://www.inolux-corp.com/datasheet/SMDLED/Addressable%20LED/IN-PI554FCH.pdf"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -1818,7 +1822,7 @@
 				)
 			)
 		)
-		(property "Description" "5050 RGB LED 4-Pin with integrated IC"
+		(property "Description" ""
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -1830,7 +1834,9 @@
 				)
 			)
 		)
+		(property ki_fp_filters "LED*IN-PI554FCH*PLCC*5.0x5.0mm*P3.2mm*")
 		(path "/17782c78-4dd4-4bde-81f4-3392b23b87a5")
+		(sheetname "Racine")
 		(sheetfile "c34.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -2770,7 +2776,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Fuseholder 696310001002:696310001002"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -2794,7 +2800,7 @@
 				)
 			)
 		)
-		(property "Description" "Fuse"
+		(property "Description" ""
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -2806,7 +2812,9 @@
 				)
 			)
 		)
+		(property ki_fp_filters "*Fuse*")
 		(path "/7ae802c4-cede-4c86-9af2-ddc6fb4fc8b4")
+		(sheetname "Racine")
 		(sheetfile "c34.kicad_sch")
 		(attr through_hole)
 		(fp_line
@@ -3607,7 +3615,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Relay_THT:Relay_SPDT_SANYOU_SRD_Series_Form_C"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -3619,7 +3627,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "http://www.sanyourelay.ca/public/products/pdf/SRD.pdf"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -3631,7 +3639,7 @@
 				)
 			)
 		)
-		(property "Description" "Sanyo SRD relay, Single Pole Miniature Power Relay,"
+		(property "Description" ""
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -3643,7 +3651,9 @@
 				)
 			)
 		)
+		(property ki_fp_filters "Relay*SPDT*SANYOU*SRD*Series*Form*C*")
 		(path "/444343a7-03c6-490d-b4a8-bf49337ce9fb")
+		(sheetname "Racine")
 		(sheetfile "c34.kicad_sch")
 		(attr through_hole)
 		(fp_line
@@ -4058,7 +4068,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "LED_SMD:LED_Inolux_IN-PI554FCH_PLCC4_5.0x5.0mm_P3.2mm"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -4070,7 +4080,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "http://www.inolux-corp.com/datasheet/SMDLED/Addressable%20LED/IN-PI554FCH.pdf"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -4082,7 +4092,7 @@
 				)
 			)
 		)
-		(property "Description" "5050 RGB LED 4-Pin with integrated IC"
+		(property "Description" ""
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -4094,7 +4104,9 @@
 				)
 			)
 		)
+		(property ki_fp_filters "LED*IN-PI554FCH*PLCC*5.0x5.0mm*P3.2mm*")
 		(path "/8155bf61-dd7e-4297-a78c-76c78ded7644")
+		(sheetname "Racine")
 		(sheetfile "c34.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -4315,7 +4327,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "LED_SMD:LED_Inolux_IN-PI554FCH_PLCC4_5.0x5.0mm_P3.2mm"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -4327,7 +4339,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "http://www.inolux-corp.com/datasheet/SMDLED/Addressable%20LED/IN-PI554FCH.pdf"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -4339,7 +4351,7 @@
 				)
 			)
 		)
-		(property "Description" "5050 RGB LED 4-Pin with integrated IC"
+		(property "Description" ""
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -4351,7 +4363,9 @@
 				)
 			)
 		)
+		(property ki_fp_filters "LED*IN-PI554FCH*PLCC*5.0x5.0mm*P3.2mm*")
 		(path "/32aa6fc6-55cd-42ea-86a6-893ece28cb69")
+		(sheetname "Racine")
 		(sheetfile "c34.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -5062,7 +5076,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Button_Switch_SMD:SW_SPST_CK_RS282G05A3"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -5086,7 +5100,7 @@
 				)
 			)
 		)
-		(property "Description" "Push button switch, generic, two pins"
+		(property "Description" ""
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -5099,6 +5113,7 @@
 			)
 		)
 		(path "/22e6780a-61ed-4b86-9968-510adb72ed35")
+		(sheetname "Racine")
 		(sheetfile "c34.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -5373,7 +5388,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
 			(at 0 0 -90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -5397,7 +5412,7 @@
 				)
 			)
 		)
-		(property "Description" "NPN transistor Current controlled devices typically used to amplify current or used as a switch. <ul>  <li>    BC547 -     <a href=\"http://www.sparkfun.com/products/8928\">COM-08928</a>    (TO-92 45V 100mA) (1.Collector 2.Base 3.Emitter)  </li>  <li>    2N3904 -     <a href=\"http://www.sparkfun.com/products/521\">COM-00521</a>    (TO-92 40V 200mA) (1.Emitter 2.Base 3.Collector)  </li>  <li>    P2N2222A -     <a href=\"http://www.sparkfun.com/products/12852\">COM-12852</a>    (TO-92 40V 600mA) (1.Collector 2.Base 3.Emitter)  </li></ul>"
+		(property "Description" ""
 			(at 0 0 -90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -5422,7 +5437,9 @@
 				(justify mirror)
 			)
 		)
+		(property ki_fp_filters "*SOT23-3* *SOT23-3*")
 		(path "/b7d83c3e-4b91-49e2-b516-1235725732e8")
+		(sheetname "Racine")
 		(sheetfile "c34.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -5639,7 +5656,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_1210_3225Metric_Pad1.33x2.70mm_HandSolder"
 			(at 0 0 -90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -5663,7 +5680,7 @@
 				)
 			)
 		)
-		(property "Description" "Polarized capacitor"
+		(property "Description" ""
 			(at 0 0 -90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -5675,7 +5692,9 @@
 				)
 			)
 		)
+		(property ki_fp_filters "CP_*")
 		(path "/2b031ade-fbf5-4fe9-8c85-de92c3329ed6")
+		(sheetname "Racine")
 		(sheetfile "c34.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -5850,7 +5869,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Diode_SMD:D_MiniMELF"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -5862,7 +5881,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "http://www.vishay.com/docs/85557/ll4148.pdf"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -5874,7 +5893,7 @@
 				)
 			)
 		)
-		(property "Description" "100V 0.15A standard switching diode, MiniMELF"
+		(property "Description" ""
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -5886,7 +5905,9 @@
 				)
 			)
 		)
+		(property ki_fp_filters "D*MiniMELF*")
 		(path "/5b1eef65-9574-4c68-be04-f2b76fa9ee13")
+		(sheetname "Racine")
 		(sheetfile "c34.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -6143,7 +6164,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_1206_3216Metric_Pad1.30x1.75mm_HandSolder"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -6167,7 +6188,7 @@
 				)
 			)
 		)
-		(property "Description" "Resistor"
+		(property "Description" ""
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -6179,7 +6200,9 @@
 				)
 			)
 		)
+		(property ki_fp_filters "R_*")
 		(path "/0671e3dc-8570-4f10-a97f-67157aa1efd7")
+		(sheetname "Racine")
 		(sheetfile "c34.kicad_sch")
 		(attr smd)
 		(fp_line
@@ -6867,7 +6890,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "esp32c3:MOUDLE14P-SMD-2.54-21X17.8MM"
 			(at 0 0 180)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -6904,6 +6927,7 @@
 			)
 		)
 		(path "/3ccad39a-ac46-409e-949b-5b06a2fc4764")
+		(sheetname "Racine")
 		(sheetfile "c34.kicad_sch")
 		(attr through_hole)
 		(fp_line
@@ -7413,7 +7437,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Value" "10k"
+		(property "Value" "1k"
 			(at 0 -1.82 90)
 			(layer "B.Fab")
 			(uuid "bef4feb4-ce08-4e00-a002-f0b91bc6fce3")
@@ -7425,7 +7449,7 @@
 				(justify mirror)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_1206_3216Metric_Pad1.30x1.75mm_HandSolder"
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -7449,7 +7473,7 @@
 				)
 			)
 		)
-		(property "Description" "Resistor"
+		(property "Description" ""
 			(at 0 0 90)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -7461,7 +7485,9 @@
 				)
 			)
 		)
+		(property ki_fp_filters "R_*")
 		(path "/3319b9d3-6ec5-4b0d-9270-e4269d0fd4b9")
+		(sheetname "Racine")
 		(sheetfile "c34.kicad_sch")
 		(attr smd)
 		(fp_line
