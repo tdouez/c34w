@@ -32,7 +32,8 @@
 // 2024/02/11 - FB V1.1.0 - Mise à jour toutes les 15 minutes
 // 2024/02/26 - FB V1.2.0 - Correction sur les heures HP et HC inversées
 //                          Passage mise à jour toules les 5 minutes.
-//                          Ajout clignotement jour en HP                
+//                          Ajout clignotement jour en HP  
+// 2024/03/07 - FB V1.2.1 - Ajout test leds au démarrage              
 //--------------------------------------------------------------------
 #include <Arduino.h>
 #include <DNSServer.h>
@@ -52,7 +53,7 @@
 #include "mdns.h"
 #include <Ticker.h>
  
-#define VERSION   "v1.2.0"
+#define VERSION   "v1.2.1"
  
 #define LED_DEMAIN  0
 #define LED_JOUR    1
@@ -113,6 +114,37 @@ const uint32_t purple = pixels.Color(255, 0, 255);
 const uint32_t yellow = pixels.Color(255, 255, 0);
 const uint32_t orange = pixels.Color(255, 165, 0);
 
+
+//-----------------------------------------------------------------------
+void test_led() {
+  pixels.setPixelColor(LED_JOUR, red);
+  pixels.setPixelColor(LED_DEMAIN, red);
+  pixels.setPixelColor(LED_WIFI, red);
+  pixels.setPixelColor(LED_RELAIS, red);
+  pixels.show();
+
+  delay(400);
+  pixels.setPixelColor(LED_JOUR, green);
+  pixels.setPixelColor(LED_DEMAIN, green);
+  pixels.setPixelColor(LED_WIFI, green);
+  pixels.setPixelColor(LED_RELAIS, green);
+  pixels.show();
+
+  delay(400);
+  pixels.setPixelColor(LED_JOUR, blue);
+  pixels.setPixelColor(LED_DEMAIN, blue);
+  pixels.setPixelColor(LED_WIFI, blue);
+  pixels.setPixelColor(LED_RELAIS, blue);
+  pixels.show();
+
+  delay(400);
+  pixels.setPixelColor(LED_JOUR, black);
+  pixels.setPixelColor(LED_DEMAIN, black);
+  pixels.setPixelColor(LED_WIFI, black);
+  pixels.setPixelColor(LED_RELAIS, black);
+  pixels.show();
+  
+}
 
 //-----------------------------------------------------------------------
 void blink_led() {
@@ -630,6 +662,9 @@ void setup() {
   pixels.begin(); // INITIALIZE NeoPixel
   pixels.clear(); // Set all pixel colors to 'off'
   pixels.setBrightness(100);
+
+  test_led();
+  
   pixels.setPixelColor(LED_WIFI, purple);
   pixels.show();
   
