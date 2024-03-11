@@ -33,7 +33,7 @@
 // 2024/02/26 - FB V1.2.0 - Correction sur les heures HP et HC inversées
 //                          Passage mise à jour toules les 5 minutes.
 //                          Ajout clignotement jour en HP  
-// 2024/03/07 - FB V1.2.1 - Ajout test leds au démarrage              
+// 2024/03/07 - FB V1.2.1 - Ajout test leds et relais au démarrage              
 //--------------------------------------------------------------------
 #include <Arduino.h>
 #include <DNSServer.h>
@@ -143,6 +143,10 @@ void test_led() {
   pixels.setPixelColor(LED_WIFI, black);
   pixels.setPixelColor(LED_RELAIS, black);
   pixels.show();
+  digitalWrite(PIN_RELAIS, HIGH);
+
+  delay(400);
+  digitalWrite(PIN_RELAIS, LOW);
   
 }
 
