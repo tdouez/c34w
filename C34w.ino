@@ -33,7 +33,8 @@
 // 2024/02/26 - FB V1.2.0 - Correction sur les heures HP et HC inversées
 //                          Passage mise à jour toules les 5 minutes.
 //                          Ajout clignotement jour en HP  
-// 2024/03/07 - FB V1.2.1 - Ajout test leds et relais au démarrage              
+// 2024/03/07 - FB V1.2.1 - Ajout test leds et relais au démarrage   
+// 2024/05/25 - FB V1.2.2 - Gestion heure été/hiver           
 //--------------------------------------------------------------------
 #include <Arduino.h>
 #include <DNSServer.h>
@@ -52,8 +53,9 @@
 #include "SPIFFS.h"
 #include "mdns.h"
 #include <Ticker.h>
+#include <Timezone.h>
  
-#define VERSION   "v1.2.1"
+#define VERSION   "v1.2.2"
  
 #define LED_DEMAIN  0
 #define LED_JOUR    1
@@ -113,6 +115,10 @@ const uint32_t white = pixels.Color(255, 255, 255);
 const uint32_t purple = pixels.Color(255, 0, 255);
 const uint32_t yellow = pixels.Color(255, 255, 0);
 const uint32_t orange = pixels.Color(255, 165, 0);
+
+TimeChangeRule myDST = {"CEST", Last, Sun, Mar, 2, 120}; // Daylight time - Règle de passage à l'heure d'été pour la France
+TimeChangeRule mySTD = {"CET", Last, Sun, Oct, 3, 60}; // Standard time - Règle de passage à l'heure d'hiver la France
+Timezone myTZ(myDST, mySTD);
 
 
 //-----------------------------------------------------------------------
@@ -225,9 +231,12 @@ bool checkRelais()
 //-----------------------------------------------------------------------
 uint checkHoraire()
 {
+  time_t rawtime = myTZ.toLocal(timeClient.getEpochTime());
+  struct tm * ti;
+  ti = localtime (&rawtime);
   uint h = HC;
 
-  uint heure_courante = timeClient.getHours();
+  uint heure_courante = ti->tm_hour-1;
 
   if (heure_courante >= 0 && heure_courante < HORAIRE_MATIN) h = HC; // 0h à 6h -> heures creuses
   if (heure_courante >= HORAIRE_MATIN && heure_courante < HORAIRE_SOIR) h = HP; // 6h à 22h -> heures pleines
@@ -239,7 +248,7 @@ uint checkHoraire()
 //-----------------------------------------------------------------------
 String return_current_date()
 {
-  time_t rawtime = timeClient.getEpochTime();
+  time_t rawtime = myTZ.toLocal(timeClient.getEpochTime());
   struct tm * ti;
   ti = localtime (&rawtime);
   uint16_t year = ti->tm_year + 1900;
@@ -253,7 +262,11 @@ String return_current_date()
 //-----------------------------------------------------------------------
 String return_current_time()
 {
-  return String(timeClient.getHours()) + String(":") + String(timeClient.getMinutes()) + String(":") + String(timeClient.getSeconds());
+  time_t rawtime = myTZ.toLocal(timeClient.getEpochTime());
+  struct tm * ti;
+  ti = localtime (&rawtime);
+
+  return String(ti->tm_hour-1) + String(":") + String(timeClient.getMinutes()) + String(":") + String(timeClient.getSeconds());
 }
 
 //-----------------------------------------------------------------------
