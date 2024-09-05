@@ -1,5 +1,5 @@
 {
     "module_name": "c34w",
-    "url_edf_part": "https://particulier.edf.fr/services/rest/referentiel/searchTempoStore?dateRelevant=",
+    "url_edf_part": "https://www.api-couleur-tempo.fr/api/jourTempo",
     "r_hp_name": "1"
   }

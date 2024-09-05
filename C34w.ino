@@ -32,9 +32,10 @@
 // 2024/02/11 - FB V1.1.0 - Mise à jour toutes les 15 minutes
 // 2024/02/26 - FB V1.2.0 - Correction sur les heures HP et HC inversées
 //                          Passage mise à jour toules les 5 minutes.
-//                          Ajout clignotement jour en HP  
-// 2024/03/07 - FB V1.2.1 - Ajout test leds et relais au démarrage   
-// 2024/05/25 - FB V1.2.2 - Gestion heure été/hiver           
+//                          Ajout clignotement jour en HP
+// 2024/03/07 - FB V1.2.1 - Ajout test leds et relais au démarrage
+// 2024/05/25 - FB V1.2.2 - Gestion heure été/hiver
+// 2024/09/05 - FB V1.3.0 - Changement de serveur pour la récupération de la couleur TEMPO
 //--------------------------------------------------------------------
 #include <Arduino.h>
 #include <DNSServer.h>
@@ -54,20 +55,20 @@
 #include "mdns.h"
 #include <Ticker.h>
 #include <Timezone.h>
- 
-#define VERSION   "v1.2.2"
- 
+
+#define VERSION   "v1.3.0"
+
 #define LED_DEMAIN  0
 #define LED_JOUR    1
 #define LED_WIFI    2
 #define LED_RELAIS  3
- 
+
 #define PIN_LED     D1
 #define PIN_BP      D3
 #define PIN_RELAIS  D10
 #define NUMPIXELS   4
- 
-#define DEF_URL_EDF_PART "https://particulier.edf.fr/services/rest/referentiel/searchTempoStore?dateRelevant="
+
+#define DEF_URL_TEMPO "https://www.api-couleur-tempo.fr/api/jourTempo"
 
 #define MAX_BUFFER      32
 #define MAX_BUFFER_URL  200
@@ -76,11 +77,11 @@
 #define HP          1
 #define HORAIRE_MATIN 6
 #define HORAIRE_SOIR  22
- 
+
 char module_name[MAX_BUFFER];
 char url_edf_part[MAX_BUFFER_URL];
-char couleur_jour[MAX_BUFFER];
-char couleur_demain[MAX_BUFFER];
+uint8_t couleur_jour = 0;
+uint8_t couleur_demain = 0;
 bool flag_call = true;
 bool flag_first = true;
 bool etat_relais = false;
@@ -88,15 +89,15 @@ bool maj_prog = false;
 bool state_led = false;
 String Reponse_tempo;
 String Startup_date;
-uint b_hc_name;
-uint b_hp_name;
-uint w_hc_name;
-uint w_hp_name;
-uint r_hc_name;
-uint r_hp_name;
-uint horaire = HC;
-uint memo_minute = 0;
-uint minute_courante = 0;
+uint8_t b_hc_name;
+uint8_t b_hp_name;
+uint8_t w_hc_name;
+uint8_t w_hp_name;
+uint8_t r_hc_name;
+uint8_t r_hp_name;
+uint8_t horaire = HC;
+uint8_t memo_minute = 0;
+uint8_t minute_courante = 0;
 uint32_t val_couleur_jour;
 uint32_t val_couleur_demain;
 
@@ -153,7 +154,7 @@ void test_led() {
 
   delay(400);
   digitalWrite(PIN_RELAIS, LOW);
-  
+
 }
 
 //-----------------------------------------------------------------------
@@ -162,19 +163,36 @@ void blink_led() {
 }
 
 //-----------------------------------------------------------------------
+char *return_couleur(uint8_t couleur) {
+
+  switch (couleur) {
+    case 0:
+      return "SANS";
+    case 1:
+      return "BLEU";
+    case 2:
+      return "BLANC";
+    case 3:
+      return "ROUGE";
+    default:
+      return "SANS";
+  }
+}
+
+//-----------------------------------------------------------------------
 void start_mdns_service()
 {
-    //initialize mDNS service
-    esp_err_t err = mdns_init();
-    if (err) {
-        printf("MDNS Init failed: %d\n", err);
-        return;
-    }
+  //initialize mDNS service
+  esp_err_t err = mdns_init();
+  if (err) {
+    printf("MDNS Init failed: %d\n", err);
+    return;
+  }
 
-    //set hostname
-    mdns_hostname_set("c34w");
-    //set default instance
-    mdns_instance_name_set("c34w TEMPO");
+  //set hostname
+  mdns_hostname_set("c34w");
+  //set default instance
+  mdns_instance_name_set("c34w TEMPO");
 }
 
 //-----------------------------------------------------------------------
@@ -187,7 +205,7 @@ bool checkRelais()
   Serial.print("Couleur:");
   Serial.println(couleur_jour);
 
-  if (strstr(couleur_jour, "BLEU")) {
+  if (couleur_jour == 1) { // BLEU
     switch (horaire) {
       case HC:
         if (b_hc_name == 1) r = true;
@@ -199,7 +217,7 @@ bool checkRelais()
     }
   }
   else {
-    if (strstr(couleur_jour, "BLANC")) {
+    if (couleur_jour == 2) { // BLANC
       switch (horaire) {
         case HC:
           if (w_hc_name == 1) r = true;
@@ -211,7 +229,7 @@ bool checkRelais()
       }
     }
     else {
-      if (strstr(couleur_jour, "ROUGE")) {
+      if (couleur_jour == 3) { // ROUGE
         switch (horaire) {
           case HC:
             if (r_hc_name == 1) r = true;
@@ -236,7 +254,7 @@ uint checkHoraire()
   ti = localtime (&rawtime);
   uint h = HC;
 
-  uint heure_courante = ti->tm_hour-1;
+  uint heure_courante = ti->tm_hour - 1;
 
   if (heure_courante >= 0 && heure_courante < HORAIRE_MATIN) h = HC; // 0h à 6h -> heures creuses
   if (heure_courante >= HORAIRE_MATIN && heure_courante < HORAIRE_SOIR) h = HP; // 6h à 22h -> heures pleines
@@ -266,16 +284,16 @@ String return_current_time()
   struct tm * ti;
   ti = localtime (&rawtime);
 
-  return String(ti->tm_hour-1) + String(":") + String(timeClient.getMinutes()) + String(":") + String(timeClient.getSeconds());
+  return String(ti->tm_hour - 1) + String(":") + String(timeClient.getMinutes()) + String(":") + String(timeClient.getSeconds());
 }
 
 //-----------------------------------------------------------------------
 void page_config_json(AsyncWebServerRequest *request)
 {
-String strJson = "{\n";
+  String strJson = "{\n";
 
   Serial.println(F("Page config.json"));
-  
+
   // url_edf_part ---------------------
   strJson += F("\"url_edf_part\": \"");
   strJson += url_edf_part;
@@ -301,7 +319,7 @@ String strJson = "{\n";
   strJson += F("\"r_hp_name\": \"");
   strJson += r_hp_name;
   strJson += F("\"\n");
-  
+
   strJson += F("}");
 
   request->send(200, "text/json", strJson);
@@ -310,63 +328,63 @@ String strJson = "{\n";
 //-----------------------------------------------------------------------
 void loadPages()
 {
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest * request)
   {
     request->send(SPIFFS, "/index.html", "text/html");
   });
 
-  server.on("/w3.css", HTTP_GET, [](AsyncWebServerRequest *request)
+  server.on("/w3.css", HTTP_GET, [](AsyncWebServerRequest * request)
   {
     request->send(SPIFFS, "/w3.css", "text/css");
   });
 
-  server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request)
+  server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest * request)
   {
     request->send(SPIFFS, "/script.js", "text/javascript");
   });
 
-  server.on("/jquery.js", HTTP_GET, [](AsyncWebServerRequest *request)
+  server.on("/jquery.js", HTTP_GET, [](AsyncWebServerRequest * request)
   {
     request->send(SPIFFS, "/jquery.js", "text/javascript");
   });
 
-  server.on("/notify.js", HTTP_GET, [](AsyncWebServerRequest *request)
+  server.on("/notify.js", HTTP_GET, [](AsyncWebServerRequest * request)
   {
     request->send(SPIFFS, "/notify.js", "text/javascript");
   });
 
-  server.on("/fb.svg", HTTP_GET, [](AsyncWebServerRequest *request)
+  server.on("/fb.svg", HTTP_GET, [](AsyncWebServerRequest * request)
   {
     request->send(SPIFFS, "/fb.svg", "image/svg+xml");
   });
 
-  server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request)
+  server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest * request)
   {
     request->send(SPIFFS, "/favicon.ico", "image/x-icon");
   });
 
-  server.on("/config.json", HTTP_GET, [](AsyncWebServerRequest *request)
+  server.on("/config.json", HTTP_GET, [](AsyncWebServerRequest * request)
   {
     page_config_json(request);
   });
 
-  server.on("/info.json", HTTP_GET, [](AsyncWebServerRequest *request)
+  server.on("/info.json", HTTP_GET, [](AsyncWebServerRequest * request)
   {
     page_info_json(request);
   });
 
-  server.on("/config.htm", HTTP_POST, [](AsyncWebServerRequest *request)
+  server.on("/config.htm", HTTP_POST, [](AsyncWebServerRequest * request)
   {
     page_config_htm(request);
   });
-  
-  server.on("/maj_tempo.htm", HTTP_POST, [](AsyncWebServerRequest *request)
+
+  server.on("/maj_tempo.htm", HTTP_POST, [](AsyncWebServerRequest * request)
   {
     page_maj_tempo_htm(request);
     request->send(200, "text/plain", "maj_tempo OK");
   });
 
-  server.onNotFound([](AsyncWebServerRequest *request){
+  server.onNotFound([](AsyncWebServerRequest * request) {
     Serial.println("Page not found");
     Serial.println(request->method());
     Serial.println(request->url());
@@ -377,7 +395,7 @@ void loadPages()
 //-----------------------------------------------------------------------
 void page_info_json(AsyncWebServerRequest *request)
 {
-String strJson = "{\n";
+  String strJson = "{\n";
 
   //Serial.println(F("Page info.json"));
 
@@ -390,21 +408,21 @@ String strJson = "{\n";
   strJson += F("\"version\": \"");
   strJson += VERSION;
   strJson += F("\",\n");
-  
+
   // couleur_jour ---------------------
   strJson += F("\"couleur_jour\": \"");
-  strJson += couleur_jour;
+  strJson += return_couleur(couleur_jour);
   strJson += F("\",\n");
-  
+
   // couleur_demain ---------------------
   strJson += F("\"couleur_demain\": \"");
-  strJson += couleur_demain;
+  strJson += return_couleur(couleur_demain);
   strJson += F("\",\n");
 
   // heure ---------------------
   strJson += F("\"heure\": \"");
   if (horaire == HC) strJson += "HC";
-    else strJson += "HP";
+  else strJson += "HP";
   strJson += F("\",\n");
 
   // etat_relais ---------------------
@@ -430,25 +448,25 @@ String strJson = "{\n";
 //-----------------------------------------------------------------------
 void page_config_htm(AsyncWebServerRequest *request)
 {
-boolean flag_restart = false;
+  boolean flag_restart = false;
 
   Serial.println(F("Page config htm"));
 
-  b_hc_name=0;
-  b_hp_name=0;
-  w_hc_name=0;
-  w_hp_name=0;
-  r_hc_name=0;
-  r_hp_name=0;
+  b_hc_name = 0;
+  b_hp_name = 0;
+  w_hc_name = 0;
+  w_hp_name = 0;
+  r_hc_name = 0;
+  r_hp_name = 0;
 
   int params = request->params();
   Serial.print("Nbr params:");
   Serial.println(params);
 
-  for(int i=0;i<params;i++){
+  for (int i = 0; i < params; i++) {
     AsyncWebParameter* p = request->getParam(i);
     Serial.printf("POST[%s]: %s\n", p->name().c_str(), p->value().c_str());
-    
+
     if (strstr(p->name().c_str(), "url_edf_part")) strcpy(url_edf_part, p->value().c_str());
     if (strstr(p->name().c_str(), "b_hc_name")) b_hc_name = 1;
     if (strstr(p->name().c_str(), "b_hp_name")) b_hp_name = 1;
@@ -456,7 +474,7 @@ boolean flag_restart = false;
     if (strstr(p->name().c_str(), "w_hp_name")) w_hp_name = 1;
     if (strstr(p->name().c_str(), "r_hc_name")) r_hc_name = 1;
     if (strstr(p->name().c_str(), "r_hp_name")) r_hp_name = 1;
-     
+
   }
   saveConfig();
   request->send (200, "text/plain", "OK");
@@ -479,31 +497,31 @@ void page_maj_tempo_htm(AsyncWebServerRequest *request)
 //-----------------------------------------------------------------------
 void printConfig() {
 
-    Serial.println(F("------------------------------------"));
-    Serial.println(F("Configuration:"));
-    Serial.print(F("Module: "));
-    Serial.println(module_name);
-    Serial.print(F("Url_edf_part: "));
-    Serial.println(url_edf_part);
-    Serial.print(F("b_hc_name: "));
-    Serial.println(b_hc_name);
-    Serial.print(F("b_hp_name: "));
-    Serial.println(b_hp_name);
-    Serial.print(F("w_hc_name: "));
-    Serial.println(w_hc_name);
-    Serial.print(F("w_hp_name: "));
-    Serial.println(w_hp_name);
-    Serial.print(F("r_hc_name: "));
-    Serial.println(r_hc_name);
-    Serial.print(F("r_hp_name: "));
-    Serial.println(r_hp_name);
-    Serial.println(F("------------------------------------"));
+  Serial.println(F("------------------------------------"));
+  Serial.println(F("Configuration:"));
+  Serial.print(F("Module: "));
+  Serial.println(module_name);
+  Serial.print(F("Url_edf_part: "));
+  Serial.println(url_edf_part);
+  Serial.print(F("b_hc_name: "));
+  Serial.println(b_hc_name);
+  Serial.print(F("b_hp_name: "));
+  Serial.println(b_hp_name);
+  Serial.print(F("w_hc_name: "));
+  Serial.println(w_hc_name);
+  Serial.print(F("w_hp_name: "));
+  Serial.println(w_hp_name);
+  Serial.print(F("r_hc_name: "));
+  Serial.println(r_hc_name);
+  Serial.print(F("r_hp_name: "));
+  Serial.println(r_hp_name);
+  Serial.println(F("------------------------------------"));
 }
 
 //-----------------------------------------------------------------------
 void loadConfig() {
 
-  sprintf(url_edf_part, "%s", DEF_URL_EDF_PART);
+  sprintf(url_edf_part, "%s", DEF_URL_TEMPO);
 
   if (SPIFFS.exists("/config.json")) {
     Serial.println(F("Lecture config.json"));
@@ -513,14 +531,14 @@ void loadConfig() {
       DeserializationError error = deserializeJson(doc, configFile);
       if (error) Serial.println(F("Impossible de parser config.cfg"));
 
-      strcpy(url_edf_part, doc["url_edf_part"] | DEF_URL_EDF_PART);
+      strcpy(url_edf_part, doc["url_edf_part"] | DEF_URL_TEMPO);
       b_hc_name = doc["b_hc_name"] | 0;
       b_hp_name = doc["b_hp_name"] | 0;
       w_hc_name = doc["w_hc_name"] | 0;
       w_hp_name = doc["w_hp_name"] | 0;
       r_hc_name = doc["r_hc_name"] | 0;
       r_hp_name = doc["r_hp_name"] | 0;
-      		
+
       configFile.close();
     }
     else Serial.println(F("Impossible de lire config.json !!"));
@@ -529,7 +547,7 @@ void loadConfig() {
 
 //-----------------------------------------------------------------------
 void saveConfig() {
-  
+
   pixels.setPixelColor(LED_WIFI, purple);
   pixels.show();
   Serial.println(F("Sauvegarde config.json"));
@@ -564,28 +582,28 @@ void configModeCallback (WiFiManager *myWiFiManager) {
 }
 
 //-----------------------------------------------------------------------
-void checkButton(){
+void checkButton() {
   // check for button press
   if ( digitalRead(PIN_BP) == LOW ) {
     // poor mans debounce/press-hold, code not ideal for production
     delay(50);
-    if( digitalRead(PIN_BP) == LOW ){
+    if ( digitalRead(PIN_BP) == LOW ) {
       Serial.println("Button Pressed");
       // still holding button for 3000 ms, reset settings, code not ideaa for production
       delay(3000); // reset delay hold
-      if( digitalRead(PIN_BP) == LOW ){
+      if ( digitalRead(PIN_BP) == LOW ) {
         Serial.println("Button Held");
         Serial.println("Erasing Config, restarting");
-        for(int i=0; i<10; i++) {
-          if (i%2) pixels.setPixelColor(LED_WIFI, yellow);
-            else pixels.setPixelColor(LED_WIFI, black);
+        for (int i = 0; i < 10; i++) {
+          if (i % 2) pixels.setPixelColor(LED_WIFI, yellow);
+          else pixels.setPixelColor(LED_WIFI, black);
           pixels.show();
           delay(120);
         }
         wm.resetSettings();
         ESP.restart();
       }
-     
+
       // start portal w delay
       Serial.println("Starting config portal");
       wm.setConfigPortalTimeout(120);
@@ -593,8 +611,8 @@ void checkButton(){
       pixels.setPixelColor(LED_DEMAIN, black);
       pixels.setPixelColor(LED_WIFI, purple);
       pixels.show();
-     
-      if (!wm.startConfigPortal(module_name,"password")) {
+
+      if (!wm.startConfigPortal(module_name, "password")) {
         Serial.println("failed to connect or hit timeout");
         delay(3000);
         pixels.setPixelColor(LED_WIFI, red);
@@ -616,43 +634,77 @@ void interrogation_tempo()
 {
   String Url;
   HTTPClient http;
+  int httpCode;
 
-  Url = String(url_edf_part) + return_current_date();
 
   pixels.setPixelColor(LED_WIFI, yellow);
   pixels.show();
 
+  // Récup coulour jour ---------------------------
+  Url = String(url_edf_part) + "/today";
   Serial.println(Url);
   http.begin(Url);
+  // Définit l'en-tête HTTP "accept"
+  http.addHeader("accept", "application/json");
 
-  int httpCode = http.GET();
-  if(httpCode > 0) {
+  httpCode = http.GET();
+  if (httpCode > 0) {
     if (httpCode == HTTP_CODE_OK) {
-        Reponse_tempo = http.getString();
-        Serial.println(Reponse_tempo);
+      Reponse_tempo = http.getString();
+      Serial.println(Reponse_tempo);
 
-        DynamicJsonDocument jsonDoc(512);
-        DeserializationError error = deserializeJson(jsonDoc, Reponse_tempo);
-        if (error) Serial.println(F("Impossible de parser Reponse_tempo"));
-        JsonObject json = jsonDoc.as<JsonObject>();
-        //Serial.println(F("Contenu:"));
-        //serializeJson(json, Serial);
+      DynamicJsonDocument jsonDoc(512);
+      DeserializationError error = deserializeJson(jsonDoc, Reponse_tempo);
+      if (error) Serial.println(F("Impossible de parser Reponse_tempo"));
+      JsonObject json = jsonDoc.as<JsonObject>();
+      //Serial.println(F("Contenu:"));
+      //serializeJson(json, Serial);
 
-        val_couleur_jour = black;
-        strcpy(couleur_jour, json["couleurJourJ"]);
-        if (strstr(couleur_jour, "BLEU")) val_couleur_jour = blue;
-        if (strstr(couleur_jour, "BLANC")) val_couleur_jour = white;
-        if (strstr(couleur_jour, "ROUGE")) val_couleur_jour = red;
-        
-        val_couleur_demain = black;
-        strcpy(couleur_demain, json["couleurJourJ1"]);
-        if (strstr(couleur_demain, "BLEU")) val_couleur_demain = blue;
-        if (strstr(couleur_demain, "BLANC")) val_couleur_demain = white;
-        if (strstr(couleur_demain, "ROUGE")) val_couleur_demain = red;
+      val_couleur_jour = black;
+      couleur_jour = json["codeJour"];
+      if (couleur_jour == 1) val_couleur_jour = blue;
+      if (couleur_jour == 2) val_couleur_jour = white;
+      if (couleur_jour == 3) val_couleur_jour = red;
 
-        pixels.setPixelColor(LED_WIFI, green);      
+      pixels.setPixelColor(LED_WIFI, green);
     }
-    else pixels.setPixelColor(LED_WIFI, orange);  
+    else pixels.setPixelColor(LED_WIFI, orange);
+  }
+  else pixels.setPixelColor(LED_WIFI, orange);
+
+  http.end();
+
+  pixels.show();
+
+  // Récup coulour lendemain ---------------------------
+  Url = String(url_edf_part) + "/tomorrow";
+  Serial.println(Url);
+  http.begin(Url);
+  // Définit l'en-tête HTTP "accept"
+  http.addHeader("accept", "application/json");
+
+  httpCode = http.GET();
+  if (httpCode > 0) {
+    if (httpCode == HTTP_CODE_OK) {
+      Reponse_tempo = http.getString();
+      Serial.println(Reponse_tempo);
+
+      DynamicJsonDocument jsonDoc(512);
+      DeserializationError error = deserializeJson(jsonDoc, Reponse_tempo);
+      if (error) Serial.println(F("Impossible de parser Reponse_tempo"));
+      JsonObject json = jsonDoc.as<JsonObject>();
+      //Serial.println(F("Contenu:"));
+      //serializeJson(json, Serial);
+
+      val_couleur_demain = black;
+      couleur_demain = json["codeJour"];
+      if (couleur_demain == 1) val_couleur_demain = blue;
+      if (couleur_demain == 2) val_couleur_demain = white;
+      if (couleur_demain == 3) val_couleur_demain = red;
+
+      pixels.setPixelColor(LED_WIFI, green);
+    }
+    else pixels.setPixelColor(LED_WIFI, orange);
   }
   else pixels.setPixelColor(LED_WIFI, orange);
 
@@ -663,36 +715,36 @@ void interrogation_tempo()
 
 //-----------------------------------------------------------------------
 void setup() {
- 
+
   pinMode(PIN_BP, INPUT_PULLUP);
   pinMode(PIN_RELAIS, OUTPUT);
   pinMode(PIN_LED, OUTPUT);
- 
+
   Serial.begin(115200);
- 
+
   Serial.println(F("   __|              _/           _ )  |"));
   Serial.println(F("   _| |  |   ` \\    -_)   -_)    _ \\  |   -_)  |  |   -_)"));
   Serial.println(F("  _| \\_,_| _|_|_| \\___| \\___|   ___/ _| \\___| \\_,_| \\___|"));
   Serial.print(F("   C34w                                        "));
   Serial.println(VERSION);
- 
+
   pixels.begin(); // INITIALIZE NeoPixel
   pixels.clear(); // Set all pixel colors to 'off'
   pixels.setBrightness(100);
 
   test_led();
-  
+
   pixels.setPixelColor(LED_WIFI, purple);
   pixels.show();
-  
+
   sprintf(module_name, "C34w_%06X", ESP.getEfuseMac());
-  
+
   //----------------------------------------------------SPIFFS
-  if(!SPIFFS.begin()) {
+  if (!SPIFFS.begin()) {
     Serial.println("Erreur montage SPIFFS !");
     pixels.setPixelColor(LED_WIFI, red);
-	  pixels.show();
-	  while (1) {};
+    pixels.show();
+    while (1) {};
   }
   else {
     loadConfig();
@@ -706,29 +758,29 @@ void setup() {
   wm.setConfigPortalTimeout(120);
   wm.setAPCallback(configModeCallback);
 
-  std::vector<const char *> menu = {"wifi","sep","update","restart","exit"};
+  std::vector<const char *> menu = {"wifi", "sep", "update", "restart", "exit"};
   wm.setMenu(menu);
- 
-  bool res = wm.autoConnect(module_name,"fumeebleue");
-   
-  if(!res) {
-      Serial.println("Failed to connect");
-      // ESP.restart();
-      pixels.setPixelColor(LED_WIFI, red);
-      pixels.show();
-      delay(5000);
-      ESP.restart();
+
+  bool res = wm.autoConnect(module_name, "fumeebleue");
+
+  if (!res) {
+    Serial.println("Failed to connect");
+    // ESP.restart();
+    pixels.setPixelColor(LED_WIFI, red);
+    pixels.show();
+    delay(5000);
+    ESP.restart();
   }
   else {
-      //if you get here you have connected to the WiFi   
-      Serial.println("connected... :)");
-      pixels.setPixelColor(LED_WIFI, green);
-      timeClient.begin();
-      flag_first = true;
-      flag_call = true;
-      pixels.show();
+    //if you get here you have connected to the WiFi
+    Serial.println("connected... :)");
+    pixels.setPixelColor(LED_WIFI, green);
+    timeClient.begin();
+    flag_first = true;
+    flag_call = true;
+    pixels.show();
   }
- 
+
   //----------------------------------------------------SERVER
   loadPages();
   server.begin();
@@ -736,13 +788,13 @@ void setup() {
 
   //----------------------------------------------------MDNS
   start_mdns_service();
-  
+
   timeClient.update();
   Startup_date = return_current_date() + String (" ") + return_current_time();
 
   blinker.attach(1, blink_led);
 }
- 
+
 //-----------------------------------------------------------------------
 void loop() {
 
@@ -782,12 +834,12 @@ void loop() {
   checkButton();
 
   if (horaire == HC) pixels.setPixelColor(LED_JOUR, val_couleur_jour);
-    else {
-      if (state_led == true) pixels.setPixelColor(LED_JOUR, val_couleur_jour);
-        else pixels.setPixelColor(LED_JOUR, black);
-    }
+  else {
+    if (state_led == true) pixels.setPixelColor(LED_JOUR, val_couleur_jour);
+    else pixels.setPixelColor(LED_JOUR, black);
+  }
   pixels.setPixelColor(LED_DEMAIN, val_couleur_demain);
   pixels.show();
-  
- 
+
+
 }
