@@ -36,6 +36,7 @@
 // 2024/03/07 - FB V1.2.1 - Ajout test leds et relais au démarrage
 // 2024/05/25 - FB V1.2.2 - Gestion heure été/hiver
 // 2024/09/05 - FB V1.3.0 - Changement de serveur pour la récupération de la couleur TEMPO
+// 2024/09/22 - FB V1.3.1 - Déplacement pages web en PROGMEM
 //--------------------------------------------------------------------
 #include <Arduino.h>
 #include <DNSServer.h>
@@ -50,13 +51,14 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <PubSubClient.h>
-#include "FS.h"
-#include "SPIFFS.h"
-#include "mdns.h"
+#include <FS.h>
+#include <SPIFFS.h>
+#include <mdns.h>
 #include <Ticker.h>
 #include <Timezone.h>
+#include "C34w_web.h"
 
-#define VERSION   "v1.3.0"
+#define VERSION   "v1.3.1"
 
 #define LED_DEMAIN  0
 #define LED_JOUR    1
@@ -330,41 +332,31 @@ void loadPages()
 {
   server.on("/", HTTP_GET, [](AsyncWebServerRequest * request)
   {
-    request->send(SPIFFS, "/index.html", "text/html");
-  });
-
-  server.on("/w3.css", HTTP_GET, [](AsyncWebServerRequest * request)
-  {
-    request->send(SPIFFS, "/w3.css", "text/css");
+    Serial.println(F("Page index_html"));
+    request->send_P(200, "text/html", index_html);
   });
 
   server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest * request)
   {
-    request->send(SPIFFS, "/script.js", "text/javascript");
+    Serial.println(F("Page script_js"));
+    request->send_P(200, "application/javascript", script_js);
   });
 
-  server.on("/jquery.js", HTTP_GET, [](AsyncWebServerRequest * request)
+  server.on("/fbs.jpg", HTTP_GET, [](AsyncWebServerRequest * request)
   {
-    request->send(SPIFFS, "/jquery.js", "text/javascript");
-  });
-
-  server.on("/notify.js", HTTP_GET, [](AsyncWebServerRequest * request)
-  {
-    request->send(SPIFFS, "/notify.js", "text/javascript");
-  });
-
-  server.on("/fb.svg", HTTP_GET, [](AsyncWebServerRequest * request)
-  {
-    request->send(SPIFFS, "/fb.svg", "image/svg+xml");
+    Serial.println(F("Page fbs.jpg"));
+    request->send_P(200, "image/jpeg", fbs_jpg);
   });
 
   server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest * request)
   {
-    request->send(SPIFFS, "/favicon.ico", "image/x-icon");
+    Serial.println(F("Page favicon_ico"));
+    request->send_P(200, "image/x-icon", favicon_ico);
   });
 
   server.on("/config.json", HTTP_GET, [](AsyncWebServerRequest * request)
   {
+    Serial.println(F("Page /config.json"));
     page_config_json(request);
   });
 
@@ -385,7 +377,7 @@ void loadPages()
   });
 
   server.onNotFound([](AsyncWebServerRequest * request) {
-    Serial.println("Page not found");
+    Serial.println(F("Page not found"));
     Serial.println(request->method());
     Serial.println(request->url());
     request->send(404, "text/plain", "The content you are looking for was not found.");
@@ -741,15 +733,20 @@ void setup() {
 
   //----------------------------------------------------SPIFFS
   if (!SPIFFS.begin()) {
-    Serial.println("Erreur montage SPIFFS !");
-    pixels.setPixelColor(LED_WIFI, red);
+    Serial.println(F("Erreur montage SPIFFS, format en cours"));
+    pixels.setPixelColor(LED_WIFI, orange);
     pixels.show();
-    while (1) {};
+    if (SPIFFS.format()) {
+      Serial.println("Formatage SPIFFS terminé.");
+    } else {
+      Serial.println("Échec du formatage de SPIFFS !");
+      return; // Quitte le setup si le formatage échoue
+    }
+    ESP.restart();
   }
   else {
     loadConfig();
     printConfig();
-    delay(1000);
   }
 
   //----------------------------------------------------WIFI
@@ -765,7 +762,6 @@ void setup() {
 
   if (!res) {
     Serial.println("Failed to connect");
-    // ESP.restart();
     pixels.setPixelColor(LED_WIFI, red);
     pixels.show();
     delay(5000);
